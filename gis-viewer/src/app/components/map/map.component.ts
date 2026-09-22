@@ -15,6 +15,8 @@ import FeatureTable from '@arcgis/core/widgets/FeatureTable';
 import UniqueValueRenderer from '@arcgis/core/renderers/UniqueValueRenderer';
 import SimpleMarkerSymbol from '@arcgis/core/symbols/SimpleMarkerSymbol';
 import MapView from '@arcgis/core/views/MapView';
+import BasemapGallery from '@arcgis/core/widgets/BasemapGallery';
+import * as reactiveUtils from '@arcgis/core/core/reactiveUtils';
 
 import { MapService } from '../../services/map.service';
 import { EVService } from '../../services/ev.service';
@@ -23,183 +25,12 @@ import { AboutComponent } from '../about/about.component';
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [CommonModule, AboutComponent],
-  template: `
-  <!-- Top Navigation Bar -->
-  <header class="navbar">
-    <div class="nav-brand">
-      <span class="logo-icon">⚡</span>
-      <span class="brand-title">EV Charging Explorer</span>
-    </div>
-    <nav class="nav-links">
-      <button class="nav-item" [class.active]="!isAboutOpen" (click)="closeAbout()">Map View</button>
-      <button class="nav-item" [class.active]="isAboutOpen" (click)="openAbout()">About</button>
-    </nav>
-  </header>
-
-  <!-- Full-screen MapView Container -->
-  <div #mapViewNode class="map-container"></div>
-
-  <!-- Bottom Collapsible Attribute Table Drawer -->
-  <div class="bottom-panel" [class.expanded]="isTableExpanded && !isAboutOpen">
-    <button class="toggle-btn" (click)="toggleTable()">
-      <span class="btn-icon">{{ isTableExpanded ? '▼' : '▲' }}</span>
-      <span class="btn-text">{{ isTableExpanded ? 'Hide Attribute Table' : 'Show Attribute Table' }}</span>
-    </button>
-    <div #tableNode class="table-container"></div>
-  </div>
-
-  <!-- Standalone About Component Modal -->
-  <app-about *ngIf="isAboutOpen" (closeEvent)="closeAbout()"></app-about>
-  `,
-  styles: [`
-    :host {
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-
-    /* Top Navigation Bar Styling */
-    .navbar {
-      height: 56px;
-      background-color: #1e293b;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      z-index: 200;
-      flex-shrink: 0;
-    }
-
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      font-size: 18px;
-      letter-spacing: 0.5px;
-    }
-
-    .logo-icon {
-      font-size: 20px;
-      color: #38bdf8;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .nav-item {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      font-size: 14px;
-      font-weight: 500;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .nav-item:hover {
-      color: #ffffff;
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .nav-item.active {
-      color: #ffffff;
-      background-color: #0284c7;
-    }
-
-    /* Map View Container */
-    .map-container {
-      position: relative;
-      flex: 1;
-      width: 100%;
-      height: calc(100vh - 56px);
-    }
-
-    /* Reset default Esri MapView surface margins and padding */
-    ::ng-deep .esri-view,
-    ::ng-deep .esri-view-surface {
-      width: 100% !important;
-      height: 100% !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-
-    /* Bottom Collapsible Drawer Panel */
-    .bottom-panel {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      background: #ffffff;
-      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      flex-direction: column;
-      height: 350px;
-    }
-
-    .bottom-panel.expanded {
-      transform: translateY(0);
-    }
-
-    .toggle-btn {
-      position: absolute;
-      top: -36px;
-      left: 50%;
-      transform: translateX(-50%);
-      height: 36px;
-      padding: 0 20px;
-      background: #ffffff;
-      border: 1px solid #e0e0e0;
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
-      box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.1);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #333333;
-      z-index: 101;
-    }
-
-    .toggle-btn:hover {
-      background: #f5f5f5;
-    }
-
-    .btn-icon {
-      font-size: 10px;
-    }
-
-    .table-container {
-      height: 100%;
-      width: 100%;
-    }
-
-    ::ng-deep .esri-feature-table {
-      height: 100%;
-      width: 100%;
-    }
-  `]
+  imports: [
+    CommonModule, 
+    AboutComponent
+  ],
+  templateUrl: './map.component.html',
+  styleUrl: './map.component.css'
 })
 export class MapComponent implements AfterViewInit {
 
@@ -281,11 +112,14 @@ export class MapComponent implements AfterViewInit {
     });
 
     // 6. Filter FeatureTable rows to current MapView extent using view.watch
-    this.view.watch('extent', (extent) => {
-      if (extent && this.featureTable) {
-        this.featureTable.filterGeometry = extent;
+    reactiveUtils.when(
+      () => this.view.stationary,
+      () => {
+        if (this.view.extent && this.featureTable) {
+          this.featureTable.filterGeometry = this.view.extent;
+        }
       }
-    });
+    );
 
     // 7. UI Widgets Setup
     const search = new Search({ view: this.view });
@@ -313,6 +147,23 @@ export class MapComponent implements AfterViewInit {
     });
 
     this.view.ui.add(legendExpand, 'top-right');
+
+    // Create the BasemapGallery widget bound to your MapView
+    const basemapGallery = new BasemapGallery({
+      view: this.view
+    });
+
+    // Wrap BasemapGallery inside an Expand container
+    const basemapExpand = new Expand({
+      view: this.view,
+      content: basemapGallery,
+      expanded: false,
+      expandIcon: 'basemap', // Uses Esri Calcite basemap icon
+      group: 'top-right'     // Grouping ensures opening legend closes basemap, and vice-versa
+    });
+
+    // Add widget to UI layout
+    this.view.ui.add(basemapExpand, 'top-right');
   }
 
   toggleTable() {

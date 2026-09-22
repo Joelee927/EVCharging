@@ -1,0 +1,25 @@
+  <header class="navbar">
+    <div class="nav-brand">
+      <span class="logo-icon">⚡</span>
+      <span class="brand-title">EV Charging Explorer</span>
+    </div>
+    <nav class="nav-links">
+      <button class="nav-item" [class.active]="!isAboutOpen" (click)="closeAbout()">Map View</button>
+      <button class="nav-item" [class.active]="isAboutOpen" (click)="openAbout()">About</button>
+    </nav>
+  </header>
+
+  <!-- Full-screen MapView Container -->
+  <div #mapViewNode class="map-container"></div>
+
+  <!-- Bottom Collapsible Attribute Table Drawer -->
+  <div class="bottom-panel" [class.expanded]="isTableExpanded && !isAboutOpen">
+    <button class="toggle-btn" (click)="toggleTable()">
+      <span class="btn-icon">{{ isTableExpanded ? '▼' : '▲' }}</span>
+      <span class="btn-text">{{ isTableExpanded ? 'Hide Attribute Table' : 'Show Attribute Table' }}</span>
+    </button>
+    <div #tableNode class="table-container"></div>
+  </div>
+
+<!-- About Modal -->
+<app-about *ngIf="isAboutOpen" (closeEvent)="closeAbout()"></app-about>
