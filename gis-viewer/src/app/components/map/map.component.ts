@@ -1,22 +1,26 @@
 import {
   Component,
+  OnInit,
   ElementRef,
   ViewChild,
-  AfterViewInit
+  AfterViewInit,
+  OnDestroy
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
-
+import esriConfig from '@arcgis/core/config.js';
 import Search from '@arcgis/core/widgets/Search';
 import Zoom from '@arcgis/core/widgets/Zoom';
 import Legend from '@arcgis/core/widgets/Legend';
 import Expand from '@arcgis/core/widgets/Expand';
+import LayerList from '@arcgis/core/widgets/LayerList';
 import FeatureTable from '@arcgis/core/widgets/FeatureTable';
 import UniqueValueRenderer from '@arcgis/core/renderers/UniqueValueRenderer';
 import SimpleMarkerSymbol from '@arcgis/core/symbols/SimpleMarkerSymbol';
 import MapView from '@arcgis/core/views/MapView';
 import BasemapGallery from '@arcgis/core/widgets/BasemapGallery';
 import * as reactiveUtils from '@arcgis/core/core/reactiveUtils';
+import MapImageLayer from '@arcgis/core/layers/MapImageLayer';
 
 import { MapService } from '../../services/map.service';
 import { EVService } from '../../services/ev.service';
@@ -32,7 +36,7 @@ import { AboutComponent } from '../about/about.component';
   templateUrl: './map.component.html',
   styleUrl: './map.component.css'
 })
-export class MapComponent implements AfterViewInit {
+export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('mapViewNode', { static: true })
   mapViewEl!: ElementRef<HTMLDivElement>;
@@ -62,21 +66,42 @@ export class MapComponent implements AfterViewInit {
     private evService: EVService
   ) { }
 
+  ngOnInit() { 
+    esriConfig.apiKey = 'AAPTakfWrjrSi6qZyMNzOEA9Hyw..VCOBoAHTO_pJc6eFw6-q7BnX5OmVnzhTSensd0MIHyRIBXZ47lf5lP6_MPDrsY0Gd89GvUPJECfIiszcjJXx5DsIjco-EpZArpO_AMTdNjwoYTVp7_z58rdEky2Z0Z_yo33BqauQdhvD_nsKnTxWR9fLbJHr9XrjPcVBbXbeC-3jt_IKwXDQPO7UkU2-_TsnXBVplD5VfLQ91b0qEuKIZK9E1Wxwlkj7B5nXAZlzTugn6sCLBFYFsw..AT1_TVNX4kBy'
+  }
+
+  ngOnDestroy() {
+    if (this.view) {
+      this.view.destroy();
+    }
+  }
+
   async ngAfterViewInit() {
     this.view = await this.mapService.initialize(this.mapViewEl.nativeElement);
     this.view.ui.remove('zoom');
 
     // 1. Get the layer instance
-    const layer = this.evService.loadLayer();
+    const evLayer = this.evService.loadLayer();
+    evLayer.title = "Electric Charging Stations";
 
     // 2. Add layer to map
-    this.view.map?.add(layer);
+    this.view.map?.add(evLayer, 1);
+
+    const trafficLayer = new MapImageLayer({
+      url: "https://traffic.arcgis.com/arcgis/rest/services/World/Traffic/MapServer",
+      dpi: 48,
+      imageFormat: "png32",
+      refreshInterval: 1,
+      useViewTime: false
+    });
+
+    this.view.map?.add(trafficLayer, 0);
 
     // 3. Ensure layer is ready before querying features
-    await layer.when();
+    await evLayer.when();
 
     // 4. Set unique value renderer
-    const uniqueValues = await this.getUniqueNetworkValues(layer, 'EV_Network');
+    const uniqueValues = await this.getUniqueNetworkValues(evLayer, 'EV_Network');
 
     const uniqueValueInfos = uniqueValues.map((network, index) => {
       const color = this.networkColors[network] || this.getRandomColor(index, uniqueValues.length);
@@ -91,7 +116,7 @@ export class MapComponent implements AfterViewInit {
       };
     });
 
-    layer.renderer = new UniqueValueRenderer({
+    evLayer.renderer = new UniqueValueRenderer({
       field: 'EV_Network',
       defaultSymbol: new SimpleMarkerSymbol({
         color: '#9E9E9E',
@@ -105,7 +130,7 @@ export class MapComponent implements AfterViewInit {
     // 5. Bind FeatureTable to bottom panel element
     this.featureTable = new FeatureTable({
       view: this.view,
-      layer: layer,
+      layer: evLayer,
       container: this.tableEl.nativeElement,
       multipleSelectionEnabled: true,
       filterBySelectionEnabled: false
@@ -132,7 +157,7 @@ export class MapComponent implements AfterViewInit {
       view: this.view,
       layerInfos: [
         {
-          layer: layer,
+          layer: evLayer,
           title: 'EV Networks'
         }
       ]
@@ -164,6 +189,20 @@ export class MapComponent implements AfterViewInit {
 
     // Add widget to UI layout
     this.view.ui.add(basemapExpand, 'top-right');
+
+    const layerList = new LayerList({
+      view: this.view
+    });
+
+    const layerListExpand = new Expand({
+      view: this.view,
+      content: layerList,
+      expanded: false,
+      expandIcon: 'layers', // Uses Calcite layers icon
+      group: 'top-right'    // Keeps it grouped so clicking it collapses others
+    });
+
+    this.view.ui.add(layerListExpand, 'top-right');
   }
 
   toggleTable() {

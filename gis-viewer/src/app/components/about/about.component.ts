@@ -16,7 +16,7 @@ import { CommonModule } from '@angular/common';
             <img src="assets/JoeLee.jpg" alt="Joe Lee" class="profile-img" />
           </div>
           <h2><a href="https://linkedin.com/in/joelee927">Joe Lee</a></h2>
-          <p class="subtitle">Senior GIS Developer</p>
+          <p class="subtitle">Senior GIS Developer & Architect</p>
         </div>
 
         <div class="about-body">
@@ -25,8 +25,8 @@ import { CommonModule } from '@angular/common';
             <h3>Career Highlights</h3>
             <ul class="highlight-list">
               <li>Developed and supported web mapping applications utilizing ArcGIS Maps SDK and React/Angular.</li>
-              <li>Managed and upgraded GIS infrastructure with ArcGIS Enterprise in government organization.</li>
-              <li>Optimized field operation by deploying Field Maps and Survey123 mobile application.</li>
+              <li>Managed and upgraded ArcGIS Enterprise for GIS Infrastructure in government organization.</li>
+              <li>Optimized field operation by using Field Maps and Survey123 mobile application.</li>
             </ul>
           </section>
 
